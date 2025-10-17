@@ -1,5 +1,6 @@
 #include "seller.h"
 #include "buyer.h"
+#include <iostream>
 
 Seller::Seller() : owner(nullptr), sellerId(0), sellerName("") {}
 
@@ -18,6 +19,28 @@ vector<Item>& Seller::getItems() { return items; }
 void Seller::addNewItem(int id, const string& name, int qty, double price) {
     Item newItem(id, name, qty, price);
     items.push_back(newItem);
+}
+
+void Seller::updateItemQuantity(int itemId, int newQty) {
+    for (auto &item : items) {
+        if (item.getId() == itemId) {
+            item.setQuantity(newQty);
+            cout << "Item " << item.getName() << " quantity updated to " << newQty << endl;
+            return;
+        }
+    }
+    cout << "Item with ID " << itemId << " not found.\n";
+}
+
+void Seller::updateItemPrice(int itemId, double newPrice) {
+    for (auto &item : items) {
+        if (item.getId() == itemId) {
+            item.setPrice(newPrice);
+            std::cout << "Item " << item.getName() << " price updated to Rp " << newPrice << std::endl;
+            return;
+        }
+    }
+    std::cout << "Item with ID " << itemId << " not found.\n";
 }
 
 json Seller::toJson() const {

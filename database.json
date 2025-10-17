@@ -20,13 +20,7 @@
                     {
                         "id": 100,
                         "name": "Roti Tawar",
-                        "price": 12000.0,
-                        "quantity": 7
-                    },
-                    {
-                        "id": 101,
-                        "name": "Bubur Bayi",
-                        "price": 6000.0,
+                        "price": 11000.0,
                         "quantity": 3
                     }
                 ],

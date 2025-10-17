@@ -31,6 +31,10 @@ public:
     // Item Management
     void addNewItem(int id, const string& name, int qty, double price);
 
+    void updateItemQuantity(int itemId, int newQty);
+
+    void updateItemPrice(int itemId, double newPrice);
+
     // Serialization
     json toJson() const;
     void fromJson(const json& j);

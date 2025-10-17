@@ -241,13 +241,14 @@ void menuBuyer(Buyer &buyer) {
 
 void menuSeller(Seller &seller) {
     int choice = 0;
-    while (choice != 5) {
+    while (choice != 6) {
         cout << "\nSeller Menu:\n";
         cout << "1. Check Inventory\n";
         cout << "2. Add Item to Inventory\n";
         cout << "3. Remove Item from Inventory\n";
-        cout << "4. View Orders\n";
-        cout << "5. Exit to Main Menu\n";
+        cout << "4. Update Item in Inventory\n";
+        cout << "5. View Orders\n";
+        cout << "6. Exit to Main Menu\n";
         cout << "Select an option: ";
         cin >> choice;
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
@@ -328,12 +329,49 @@ void menuSeller(Seller &seller) {
                 break;
             }
 
-            case 4:
+            case 4: { 
+                cout << "Update Item in Inventory selected.\n";
+                if (seller.getItems().empty()) {
+                    cout << "Inventory is empty. Nothing to update.\n";
+                    break;
+                }
+
+                cout << "Current Inventory:\n";
+                cout << "ID\tName\t\tQuantity\tPrice\n";
+                for (const auto &item : seller.getItems()) {
+                    cout << item.getId() << "\t" 
+                        << item.getName() << "\t\t"
+                        << item.getQuantity() << "\t\tRp " 
+                        << item.getPrice() << "\n";
+                }
+                int id;
+                cout << "Enter Item ID to update: ";
+                cin >> id;
+                int updateChoice;
+                cout << "1. Replenish Quantity\n2. Change Price\nSelect: ";
+                cin >> updateChoice;
+                if (updateChoice == 1) {
+                    int qty;
+                    cout << "Enter new quantity: ";
+                    cin >> qty;
+                    seller.updateItemQuantity(id, qty);
+                } else if (updateChoice == 2) {
+                    double price;
+                    cout << "Enter new price: ";
+                    cin >> price;
+                    seller.updateItemPrice(id, price);
+                } else {
+                    cout << "Invalid option.\n";
+                }
+                break;
+            }
+
+            case 5:
                 cout << "View Orders selected.\n";
                 cout << "(Will display paid orders only, not yet implemented)\n";
                 break;
 
-            case 5:
+            case 6:
                 cout << "Exiting to Main Menu...\n";
                 return;
 
