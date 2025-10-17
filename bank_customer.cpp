@@ -1,4 +1,6 @@
 #include "bank_customer.h" 
+#include "buyer.h"
+#include "transaction.h"
 #include <iostream> 
 #include <iomanip> 
 #include <sstream> 
@@ -101,4 +103,18 @@ void BankCustomer::fromJson(const json& j) {
     history.clear();
     if (j.contains("history"))
         history = j.at("history").get<vector<string>>();
+}
+
+void BankCustomer::addTransaction(Transaction* t) {
+    transactions.push_back(t);
+}
+
+vector<Transaction*> BankCustomer::getTransactionsToday() const {
+    if (!owner) return {};
+    return owner->getTransactionsToday();
+}
+
+vector<Transaction*> BankCustomer::getTransactionsLastMonth() const {
+    if (!owner) return {};
+    return owner->getTransactionsLastMonth();
 }

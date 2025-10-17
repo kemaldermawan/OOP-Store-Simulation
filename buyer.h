@@ -2,6 +2,8 @@
 #define BUYER_H
 
 #include <string>
+#include <vector>
+#include "transaction.h"
 #include "json.hpp"
 using namespace std;
 using json = nlohmann::json;
@@ -15,6 +17,7 @@ private:
     string name;
     BankCustomer* account;
     Seller* sellerAccount;
+    vector<Transaction*> transactions;
 
 public:
     Buyer();
@@ -31,6 +34,10 @@ public:
     void setSeller(Seller* s);
     bool isSeller() const;
     Seller* getSeller() const;
+
+    void addTransaction(Transaction* t);
+    vector<Transaction*> getTransactionsToday() const;
+    vector<Transaction*> getTransactionsLastMonth() const;
 
     // Serialization
     json toJson() const;

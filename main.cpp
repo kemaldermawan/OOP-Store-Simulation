@@ -51,10 +51,25 @@ void menuBanking(Buyer &buyer) {
                     << account->getBalance() << endl;
                 break;
 
-            case 2:
-                cout << "\nTransaction History:\n";
-                account->printHistory();
+            case 2: {
+                int subChoice;
+                cout << "1. Today\n2. Last Month\nSelect: ";
+                cin >> subChoice;
+                cin.ignore();
+                
+                vector<Transaction*> txs;
+                if (subChoice == 1) txs = buyer.getTransactionsToday();
+                else if (subChoice == 2) txs = buyer.getTransactionsLastMonth();
+
+                cout << "\nTransactions:\n";
+                for (auto t : txs) {
+                    cout << "ID: " << t->getId()
+                        << ", Amount: " << t->getAmount()
+                        << ", Status: " << t->getStatus()
+                        << ", Date: " << t->getDate() << endl;
+                }
                 break;
+            }
 
             case 3: {
                 double amount;

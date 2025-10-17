@@ -9,6 +9,9 @@
 using namespace std; 
 using json = nlohmann::json; 
 
+class Buyer;
+class Transaction;
+
 class BankCustomer { 
     private: 
         int id; 
@@ -18,6 +21,8 @@ class BankCustomer {
         string email; 
         double balance; 
         vector<string> history; // Riwayat transaksi 
+        Buyer* owner; // Pointer to the owning Buyer
+        vector<Transaction*> transactions;
         
     public: 
         BankCustomer(); 
@@ -44,9 +49,15 @@ class BankCustomer {
             void printInfo() const; 
             void printHistory() const; 
             
+            vector<Transaction*> getTransactionsToday() const;
+            vector<Transaction*> getTransactionsLastMonth() const;
+
+            void setOwner(Buyer* b) { owner = b; }
+            void addTransaction(Transaction* t);
+
             // Serialization 
             json toJson() const; 
-            void fromJson(const json& j); 
+            void fromJson(const json& j);
         }; 
         
         #endif // BANK_CUSTOMER_H
