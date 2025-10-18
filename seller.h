@@ -5,15 +5,18 @@
 #include <vector>
 #include "item.h"
 #include "transaction.h"
+#include "bank_customer.h"
 #include "json.hpp"
+
 using namespace std;
 using json = nlohmann::json;
 
-class Buyer; // forward declaration
+class Buyer;
 
 class Seller {
 private:
     Buyer* owner;
+    BankCustomer* account;
     int sellerId;
     string sellerName;
     vector<Item> items;
@@ -24,26 +27,25 @@ public:
     Seller(Buyer& buyer, int sellerId, const string& sellerName);
     ~Seller();
 
-    // Getter 
     int getSellerId() const;
     string getSellerName() const;
     Buyer* getOwner() const;
     Item* getItemById(int id);
     vector<Item>& getItems();
+    const vector<Transaction*>& getTransactions() const;
 
-    // Item Management
     void addNewItem(int id, const string& name, int qty, double price);
-
     void updateItemQuantity(int itemId, int newQty);
-
     void updateItemPrice(int itemId, double newPrice);
 
-    void addTransaction(Transaction* t) { transactions.push_back(t); }
-    const vector<Transaction*>& getTransactions() const { return transactions; }
+    void addTransaction(Transaction* t);
+    double getBalance() const;
+    void setBalance(double amount);
+    void setAccount(BankCustomer* acc);
+    BankCustomer* getAccount() const;
 
-    // Serialization
     json toJson() const;
     void fromJson(const json& j);
 };
 
-#endif       // SELLER_H
+#endif

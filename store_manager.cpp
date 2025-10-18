@@ -5,7 +5,7 @@ using namespace std;
 
 // Menampilkan semua store
 void StoreManager::listAllStores(const vector<Buyer*>& buyers) {
-    cout << "\n=== Stores List ===\n";
+    cout << "\nStores List\n";
     int idx = 0;
     for (auto b : buyers) {
         if (b->isSeller()) {

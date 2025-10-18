@@ -1,27 +1,56 @@
 #include "item.h"
+#include <iostream>
+using namespace std;
 
-Item::Item() : id(0), name(""), quantity(0), price(0.0), sellerId(0), idDisplay(false) {}
+Item::Item()
+    : id(0), name(""), quantity(0), price(0.0), sellerId(0), idDisplay(false) {}
 
 Item::Item(int id, const string& name, int quantity, double price)
     : id(id), name(name), quantity(quantity), price(price), sellerId(0), idDisplay(false) {}
 
-int Item::getId() const { return id; }
+int Item::getId() const { 
+    return id; 
+}
 
-string Item::getName() const { return name; }
+string Item::getName() const { 
+    return name; 
+}
 
-int Item::getQuantity() const { return quantity; }
+int Item::getQuantity() const { 
+    return quantity; 
+}
 
-double Item::getPrice() const { return price; }
+double Item::getPrice() const { 
+    return price; 
+}
 
-void Item::setId(int newId) { id = newId; }
+int Item::getSellerId() const { 
+    return sellerId; 
+}
 
-void Item::setName(const string& newName) { name = newName; }
+void Item::setId(int newId) { 
+    id = newId; 
+}
 
-void Item::setQuantity(int newQuantity) { quantity = newQuantity; }
+void Item::setName(const string& newName) { 
+    name = newName; 
+}
 
-void Item::setPrice(double newPrice) { price = newPrice; }
+void Item::setQuantity(int newQuantity) { 
+    quantity = newQuantity; 
+}
 
-void Item::setDisplay(bool display) { idDisplay = display; }
+void Item::setPrice(double newPrice) { 
+    price = newPrice; 
+}
+
+void Item::setSellerId(int id) { 
+    sellerId = id; 
+}
+
+void Item::setDisplay(bool display) { 
+    idDisplay = display; 
+}
 
 void Item::alterItemById(int itemId, const string& newName, int newQuantity, double newPrice) {
     if (id == itemId) {
@@ -31,10 +60,10 @@ void Item::alterItemById(int itemId, const string& newName, int newQuantity, dou
     }
 }
 
-void Item::updatePriceQuantity(int itemId, double newPrice, int newQuantity) {
+void Item::updatePriceStock(int itemId, double newPrice, int newStock) {
     if (id == itemId) {
         price = newPrice;
-        quantity = newQuantity;
+        quantity = newStock;
     }
 }
 
@@ -44,6 +73,7 @@ json Item::toJson() const {
     j["name"] = name;
     j["quantity"] = quantity;
     j["price"] = price;
+    j["sellerId"] = sellerId;
     return j;
 }
 
@@ -52,4 +82,5 @@ void Item::fromJson(const json& j) {
     name = j.value("name", string(""));
     quantity = j.value("quantity", 0);
     price = j.value("price", 0.0);
+    sellerId = j.value("sellerId", 0);
 }
