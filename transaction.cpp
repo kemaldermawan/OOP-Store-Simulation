@@ -13,12 +13,13 @@ Transaction::Transaction()
     date(""),
     status("unpaid") {}
 
-Transaction::Transaction(int id, int buyerId, int sellerId, double amount, const string& date, const string& status)
+Transaction::Transaction(int id, int buyerId, int sellerId, double amount, const string& date, const string& status, const vector<OrderItem>& items)
     : id(id),
     buyerId(buyerId),
     sellerId(sellerId),
     transactionId(id),
     amount(amount),
+    items(items),
     date(date),
     status(status) {}
 
@@ -29,6 +30,7 @@ int Transaction::getSellerId() const { return sellerId; }
 double Transaction::getAmount() const { return amount; }
 string Transaction::getDate() const { return date; }
 string Transaction::getStatus() const { return status; }
+const vector<OrderItem>& Transaction::getItems() const { return items; }
 
 void Transaction::setStatus(const string& s) { status = s; }
 void Transaction::setBuyer(int bId) { buyerId = bId; }
@@ -56,6 +58,13 @@ json Transaction::toJson() const {
     j["amount"] = amount;
     j["date"] = date;
     j["status"] = status;
+
+    json items_json = json::array();
+    for (const auto& item : items) {
+        items_json.push_back(item.toJson());
+    }
+    j["items"] = items_json;
+
     return j;
 }
 
@@ -67,6 +76,15 @@ void Transaction::fromJson(const json& j) {
     amount = j.value("amount", 0.0);
     date = j.value("date", string(""));
     status = j.value("status", string("unpaid"));
+
+    items.clear();
+    if (j.contains("items")) {
+        for (const auto& item_json : j["items"]) {
+            OrderItem item;
+            item.fromJson(item_json);
+            items.push_back(item);
+        }
+    }
 }
 
 tm Transaction::getDateAsTm() const {

@@ -6,6 +6,7 @@
 #include <sstream>
 #include <iomanip>
 #include "json.hpp"
+#include "order.h"
 
 using namespace std;
 using json = nlohmann::json;
@@ -18,11 +19,12 @@ private:
     int transactionId;      
     double amount;       
     string date;         
-    string status;      
+    string status;  
+    vector<OrderItem> items;    
 
 public:
     Transaction();
-    Transaction(int id, int buyerId, int sellerId, double amount, const string& date, const string& status);
+    Transaction(int id, int buyerId, int sellerId, double amount, const string& date, const string& status, const vector<OrderItem>& items);
 
     int getId() const;
     int getTransactionId() const;
@@ -31,6 +33,7 @@ public:
     double getAmount() const;
     string getDate() const;
     string getStatus() const;
+    const vector<OrderItem>& getItems() const;
 
     void setStatus(const string& s);
     void setBuyer(int bId);

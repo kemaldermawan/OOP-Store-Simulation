@@ -4,6 +4,7 @@
 #include <vector>
 #include <iomanip>
 #include <ctime>
+#include <fstream>
 #include "bank_customer.h"
 #include "buyer.h"
 #include "seller.h"
@@ -13,9 +14,13 @@
 
 using namespace std;
 
-enum PrimaryPrompt { LOGIN, REGISTER, EXIT };
+enum PrimaryPrompt { LOGIN, REGISTER, STORE_ADMIN, EXIT };
 vector<Buyer*> allBuyers;
+vector<Transaction*> allTransactions;
 Buyer* currentBuyer = nullptr;
+
+void menuBuyer(Buyer &buyer);
+void menuSeller(Seller &seller);
 
 Buyer* findBuyerById(int id) {
     for (auto b : allBuyers) {
@@ -35,8 +40,46 @@ string getTodayDate() {
 
 string todayDate = getTodayDate();
 
-void menuBuyer(Buyer &buyer);
-void menuSeller(Seller &seller);
+void loadApplicationData() {
+    ifstream file("database.json");
+    if (!file.is_open()) {
+        cout << "(No existing database found. Starting fresh.)\n";
+        return;
+    }
+
+    json j;
+    file >> j;
+    file.close();
+
+    map<int, Transaction*> transactionMap;
+
+    if (j.contains("transactions")) {
+        for (const auto& t_json : j["transactions"]) {
+            Transaction* t = new Transaction();
+            t->fromJson(t_json);
+            allTransactions.push_back(t);
+            transactionMap[t->getId()] = t;
+        }
+    }
+
+    if (j.contains("buyers")) {
+        for (const auto& b_json : j["buyers"]) {
+            Buyer* buyer = new Buyer();
+            buyer->fromJson(b_json);
+            allBuyers.push_back(buyer);
+
+            for(Transaction* t : allTransactions){
+                if(t->getBuyerId() == buyer->getId() || t->getSellerId() == buyer->getId()){
+                    buyer->addTransaction(t);
+                    if(buyer->isSeller() && t->getSellerId() == buyer->getId()){
+                        buyer->getSeller()->addTransaction(t);
+                    }
+                }
+            }
+        }
+    }
+    cout << "(Loaded " << allBuyers.size() << " buyers and " << allTransactions.size() << " transactions from file)\n";
+}
 
 void menuBanking(Buyer &buyer) {
     int choice = 0;
@@ -330,34 +373,52 @@ void menuBuyer(Buyer &buyer) {
                         cout << "Item removed from cart if it existed.\n";
                     }
                     else if (orderOpt == 2) {
+                        map<int, vector<CartItem>> itemsBySeller;
                         for (const auto& ci : cart) {
-                            Buyer* sellerOwner = findBuyerById(ci.sellerId);
+                            itemsBySeller[ci.sellerId].push_back(ci);
+                        }
+
+                        for (auto const& [sellerId, sellerItems] : itemsBySeller) {
+                            Buyer* sellerOwner = findBuyerById(sellerId);
                             if (!sellerOwner || !sellerOwner->isSeller()) {
-                                cout << "Seller for item " << ci.itemName << " not found; skipping.\n";
+                                cout << "Seller ID " << sellerId << " not found; skipping.\n";
                                 continue;
                             }
                             Seller* sellerObj = sellerOwner->getSeller();
-                            Item* itemPtr = sellerObj->getItemById(ci.itemId);
-                            if (!itemPtr) {
-                                cout << "Item ID " << ci.itemId << " not found at seller; skipping.\n";
-                                continue;
-                            }
-                            if (ci.quantity > itemPtr->getQuantity()) {
-                                cout << "Not enough stock for item " << ci.itemName << "; skipping.\n";
-                                continue;
-                            }
-                            itemPtr->setQuantity(itemPtr->getQuantity() - ci.quantity);
 
-                            Transaction* tx = new Transaction(
-                                nextTransactionId++,
-                                currentBuyer->getId(),
-                                ci.sellerId,
-                                ci.price * ci.quantity,
-                                todayDate,
-                                string("Unpaid")
-                            );
-                            currentBuyer->addTransaction(tx);
-                            sellerObj->addTransaction(tx);
+                            double transactionAmount = 0;
+                            vector<OrderItem> transactionItems;
+                            bool stockSufficient = true;
+
+                            for (const auto& ci : sellerItems) {
+                                Item* itemPtr = sellerObj->getItemById(ci.itemId);
+                                if (!itemPtr || ci.quantity > itemPtr->getQuantity()) {
+                                    cout << "Stock for item " << ci.itemName << " is insufficient; skipping transaction with this seller.\n";
+                                    stockSufficient = false;
+                                    break;
+                                }
+                                transactionAmount += ci.price * ci.quantity;
+                                transactionItems.push_back({ci.itemId, ci.quantity, ci.price});
+                            }
+
+                            if (stockSufficient) {
+                                for (const auto& oi : transactionItems) {
+                                    sellerObj->getItemById(oi.itemId)->setQuantity(sellerObj->getItemById(oi.itemId)->getQuantity() - oi.quantity);
+                                }
+
+                                Transaction* tx = new Transaction(
+                                    nextTransactionId++,
+                                    currentBuyer->getId(),
+                                    sellerId,
+                                    transactionAmount,
+                                    todayDate,
+                                    string("Unpaid"),
+                                    transactionItems
+                                );
+                                allTransactions.push_back(tx);
+                                currentBuyer->addTransaction(tx);
+                                sellerObj->addTransaction(tx);
+                            }
                         }
 
                         currentBuyer->clearCart();
@@ -498,14 +559,15 @@ void menuBuyer(Buyer &buyer) {
 
 void menuSeller(Seller &seller) {
     int choice = 0;
-    while (choice != 6) {
+    while (choice != 7) {
         cout << "\nSeller Menu:\n";
         cout << "1. Check Inventory\n";
         cout << "2. Add Item to Inventory\n";
         cout << "3. Remove Item from Inventory\n";
         cout << "4. Update Item in Inventory\n";
         cout << "5. View Orders\n";
-        cout << "6. Exit to Main Menu\n";
+        cout << "6. Complete an Order\n";
+        cout << "7. Exit to Main Menu\n";
         cout << "Select an option: ";
         cin >> choice;
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
@@ -623,12 +685,65 @@ void menuSeller(Seller &seller) {
                 break;
             }
 
-            case 5:
-                cout << "View Orders selected.\n";
-                cout << "(Will display paid orders only, not yet implemented)\n";
+            case 5: {
+                cout << "\nAll Orders for " << seller.getSellerName() << " ---\n";
+                const auto& transactions = seller.getTransactions();
+                if (transactions.empty()) {
+                    cout << "No orders yet.\n";
+                } else {
+                    for (const auto* t : transactions) {
+                        cout << "ID: " << t->getTransactionId() << ", Buyer ID: " << t->getBuyerId()
+                            << ", Amount: Rp " << t->getAmount() << ", Status: " << t->getStatus()
+                            << ", Date: " << t->getDate() << endl;
+                    }
+                }
                 break;
+            }
 
-            case 6:
+            case 6: {
+                cout << "\nComplete an Order\n";
+                vector<Transaction*> paid_transactions;
+                for (auto* t : seller.getTransactions()) {
+                    if (t->getStatus() == "Paid") {
+                        paid_transactions.push_back(t);
+                    }
+                }
+
+                if (paid_transactions.empty()) {
+                    cout << "No paid orders to complete.\n";
+                    break;
+                }
+
+                cout << "Paid Orders:\n";
+                for (const auto* t : paid_transactions) {
+                    cout << "ID: " << t->getTransactionId() << ", Buyer ID: " << t->getBuyerId()
+                        << ", Amount: Rp " << t->getAmount() << endl;
+                }
+
+                cout << "\nEnter Transaction ID to mark as 'Completed' (0 to cancel): ";
+                int transId;
+                cin >> transId;
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+                if (transId == 0) break;
+
+                bool found = false;
+                for (auto* t : paid_transactions) {
+                    if (t->getTransactionId() == transId) {
+                        t->setStatus("Completed");
+                        found = true;
+                        cout << "Transaction " << transId << " has been marked as completed.\n";
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    cout << "Paid transaction with that ID not found.\n";
+                }
+                break;
+            }
+
+            case 7:
                 cout << "Exiting to Main Menu...\n";
                 return;
 
@@ -638,14 +753,45 @@ void menuSeller(Seller &seller) {
     }
 }
 
+void loadAllData(vector<Buyer*>& buyers, vector<Transaction*>& transactions) {
+    ifstream file("database.json");
+    if (!file.is_open()) {
+        cout << "No existing database found. Starting fresh.\n";
+        return;
+    }
+
+    json j;
+    file >> j;
+    file.close();
+
+    map<int, Transaction*> transactionMap;
+
+    if (j.contains("transactions")) {
+        for (const auto& t_json : j["transactions"]) {
+            Transaction* t = new Transaction();
+            t->fromJson(t_json);
+            transactions.push_back(t);
+            transactionMap[t->getId()] = t;
+        }
+    }
+    
+    if (j.contains("buyers")) {
+        for (const auto& b_json : j["buyers"]) {
+            Buyer* buyer = new Buyer();
+            buyer->fromJson(b_json);
+            buyers.push_back(buyer);
+        }
+    }
+}
+
 int main() {
     PrimaryPrompt prompt = LOGIN;
     int nextBuyerId = 1;
 
-    DataManager::loadAllData(allBuyers);
+    loadApplicationData();
+
     if (!allBuyers.empty()) {
         nextBuyerId = allBuyers.back()->getId() + 1;
-        cout << "(Loaded " << allBuyers.size() << " buyers from file)\n";
     } else {
         cout << "(No existing data, starting fresh)\n";
     }
@@ -654,12 +800,25 @@ int main() {
         cout << "\nSelect an option:\n";
         cout << "1. Login\n";
         cout << "2. Register\n";
-        cout << "3. Exit\n";
+        cout << "3. Store Admin Menu\n";
+        cout << "4. Exit\n";
 
         cout << "Select an option: ";
         int choice;
         cin >> choice;
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "Invalid input. Please enter a number.\n";
+            continue;
+        }
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        
+        // Periksa apakah pilihan valid untuk enum
+        if (choice < 1 || choice > 4) {
+            cout << "Invalid option.\n";
+            continue;
+        }
         prompt = static_cast<PrimaryPrompt>(choice - 1);
 
         switch (prompt) {
@@ -761,6 +920,11 @@ int main() {
                 break;
             }
 
+            case STORE_ADMIN: {
+                StoreManager::showStoreAdminMenu(allBuyers, allTransactions);
+                break;
+            }
+
             case EXIT:
                 cout << "Exiting.\n";
                 break;
@@ -773,11 +937,27 @@ int main() {
 
     DataManager::saveAllData(allBuyers);
 
-    for (auto b : allBuyers) {
-        delete b->getSeller();
-        delete b->getAccount();
-        delete b;
+    json j_out;
+    for (auto* b : allBuyers) {
+        j_out["buyers"].push_back(b->toJson());
     }
+    for (auto* t : allTransactions) {
+        j_out["transactions"].push_back(t->toJson());
+    }
+    ofstream file("database.json");
+    file << setw(4) << j_out;
+    file.close();
+
+
+    // Cleanup memory
+    for (auto b : allBuyers) {
+        delete b; // Destruktor Buyer akan menangani account dan seller
+    }
+    for (auto t : allTransactions) {
+        delete t;
+    }
+    allBuyers.clear();
+    allTransactions.clear();
 
     return 0;
 }

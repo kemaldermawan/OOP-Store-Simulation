@@ -9,9 +9,14 @@ using namespace std;
 
 class StoreManager {
 public:
-    static void listAllStores(const vector<Buyer*>& buyers);
-    static Seller* selectStore(const vector<Buyer*>& buyers);
-    static void browseStoreInventory(Seller* seller);
+    static void showStoreAdminMenu(vector<Buyer*>& buyers, vector<Transaction*>& transactions);
+private:
+    static void listTransactionsLastKDays(const vector<Transaction*>& transactions);
+    static void listUncompletedTransactions(const vector<Transaction*>& transactions);
+    static void listMostFrequentItems(const vector<Transaction*>& transactions);
+    static void listMostActiveBuyers(const vector<Buyer*>& buyers, const vector<Transaction*>& transactions);
+    static void listMostActiveSellers(const vector<Buyer*>& buyers, const vector<Transaction*>& transactions);
+    static void listUnpaidTransactions(const vector<Transaction*>& transactions);
 };
 
-#endif // STORE_MANAGER_H
+#endif
