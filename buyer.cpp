@@ -76,8 +76,6 @@ void Buyer::removeFromCart(int itemId, int sellerId) {
     );
 }
 
-
-
 double Buyer::getBalance() const {
     return account ? account->getBalance() : 0.0;
 }
@@ -97,7 +95,6 @@ bool Buyer::reduceBalance(double amount) {
 void Buyer::increaseBalance(double amount) {
     if (account) account->setBalance(account->getBalance() + amount);
 }
-
 
 void Buyer::addTransaction(Transaction* t) {
     transactions.push_back(t);
@@ -127,7 +124,6 @@ vector<Transaction*> Buyer::getTransactionsLastMonth() const {
         if (t->isLastMonth()) result.push_back(t);
     return result;
 }
-
 
 json Buyer::toJson() const {
     json j;

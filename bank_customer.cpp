@@ -7,14 +7,12 @@
 
 using namespace std; 
 
-// Constructor
 BankCustomer::BankCustomer() : id(0), name(""), address(""), phone(""), email(""), balance(0.0) {}
 
 BankCustomer::BankCustomer(int id, const string& name, double initialBalance) : id(id), name(name), address(""), phone(""), email(""), balance(initialBalance) {
     history.push_back("Account created with initial deposit Rp " + to_string((long long)initialBalance));
 }
 
-// Getter
 int BankCustomer::getId() const { return id; }
 string BankCustomer::getName() const { return name; }
 string BankCustomer::getAddress() const { return address; }
@@ -23,14 +21,12 @@ string BankCustomer::getEmail() const { return email; }
 double BankCustomer::getBalance() const { return balance; }
 vector<string> BankCustomer::getHistory() const { return history; }
 
-// Setter
 void BankCustomer::setName(const string& n) { name = n; }
 void BankCustomer::setAddress(const string& a) { address = a; }
 void BankCustomer::setPhone(const string& p) { phone = p; }
 void BankCustomer::setEmail(const string& e) { email = e; }
 void BankCustomer::setBalance(double b) { balance = b; }
 
-// Deposit function
 void BankCustomer::deposit(double amount) {
     if (amount <= 0) {
         cout << "Invalid deposit amount." << endl;
@@ -41,7 +37,6 @@ void BankCustomer::deposit(double amount) {
     cout << "Deposit successful. New balance: Rp " << fixed << setprecision(0) << balance << endl;
 }
 
-// Withdraw function
 bool BankCustomer::withdraw(double amount) {
     if (amount <= 0) {
         cout << "Invalid withdrawal amount." << endl;
@@ -57,7 +52,6 @@ bool BankCustomer::withdraw(double amount) {
     return true;
 }
 
-// Print account info
 void BankCustomer::printInfo() const {
     cout << "\nBank Account Info" << endl;
     cout << "ID: " << id << endl;
@@ -68,7 +62,6 @@ void BankCustomer::printInfo() const {
     cout << "Balance: Rp " << fixed << setprecision(0) << balance << endl;
 }
 
-// Print transaction history
 void BankCustomer::printHistory() const {
     cout << "\nTransaction History" << endl;
     if (history.empty()) {
@@ -80,7 +73,6 @@ void BankCustomer::printHistory() const {
     }
 }
 
-// Serialization
 json BankCustomer::toJson() const {
     json j;
     j["id"] = id;

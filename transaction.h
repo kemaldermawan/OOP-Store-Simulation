@@ -45,7 +45,7 @@ public:
     json toJson() const;
     void fromJson(const json& j);
 
-    std::tm getDateAsTm() const;
+    tm getDateAsTm() const;
     bool isToday() const;
     bool isLastMonth() const;
 };

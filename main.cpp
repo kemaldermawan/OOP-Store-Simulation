@@ -11,10 +11,11 @@
 #include "transaction.h"
 #include "data_manager.h"
 #include "store_manager.h"
+#include "bank_manager.h"
 
 using namespace std;
 
-enum PrimaryPrompt { LOGIN, REGISTER, STORE_ADMIN, EXIT };
+enum PrimaryPrompt { LOGIN, REGISTER, STORE_ADMIN, BANK_ADMIN, EXIT };
 vector<Buyer*> allBuyers;
 vector<Transaction*> allTransactions;
 Buyer* currentBuyer = nullptr;
@@ -686,7 +687,7 @@ void menuSeller(Seller &seller) {
             }
 
             case 5: {
-                cout << "\nAll Orders for " << seller.getSellerName() << " ---\n";
+                cout << "\nAll Orders for " << seller.getSellerName() << "\n";
                 const auto& transactions = seller.getTransactions();
                 if (transactions.empty()) {
                     cout << "No orders yet.\n";
@@ -801,7 +802,8 @@ int main() {
         cout << "1. Login\n";
         cout << "2. Register\n";
         cout << "3. Store Admin Menu\n";
-        cout << "4. Exit\n";
+        cout << "4. Bank Admin Menu\n";
+        cout << "5. Exit\n";
 
         cout << "Select an option: ";
         int choice;
@@ -813,9 +815,8 @@ int main() {
             continue;
         }
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
-        
-        // Periksa apakah pilihan valid untuk enum
-        if (choice < 1 || choice > 4) {
+
+        if (choice < 1 || choice > 5) {
             cout << "Invalid option.\n";
             continue;
         }
@@ -925,6 +926,11 @@ int main() {
                 break;
             }
 
+            case BANK_ADMIN: { 
+                BankManager::showBankAdminMenu(allBuyers, allTransactions);
+                break;
+            }
+
             case EXIT:
                 cout << "Exiting.\n";
                 break;
@@ -948,10 +954,8 @@ int main() {
     file << setw(4) << j_out;
     file.close();
 
-
-    // Cleanup memory
     for (auto b : allBuyers) {
-        delete b; // Destruktor Buyer akan menangani account dan seller
+        delete b; 
     }
     for (auto t : allTransactions) {
         delete t;

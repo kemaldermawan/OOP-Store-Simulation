@@ -62,4 +62,4 @@ extra functions
 10. Exit Program
 **/
 
-g++ main.cpp bank_customer.cpp buyer.cpp data_manager.cpp item.cpp seller.cpp store_manager.cpp transaction.cpp -o main
+g++ main.cpp bank_customer.cpp bank_manager.cpp buyer.cpp data_manager.cpp item.cpp seller.cpp store_manager.cpp transaction.cpp -o main

@@ -20,8 +20,8 @@ class BankCustomer {
         string phone; 
         string email; 
         double balance; 
-        vector<string> history; // Riwayat transaksi 
-        Buyer* owner; // Pointer to the owning Buyer
+        vector<string> history;
+        Buyer* owner;
         vector<Transaction*> transactions;
         
     public: 
@@ -55,9 +55,8 @@ class BankCustomer {
             void setOwner(Buyer* b) { owner = b; }
             void addTransaction(Transaction* t);
 
-            // Serialization 
             json toJson() const; 
             void fromJson(const json& j);
         }; 
         
-        #endif // BANK_CUSTOMER_H
+        #endif 
