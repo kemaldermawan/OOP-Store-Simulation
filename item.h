@@ -1,4 +1,5 @@
 #ifndef ITEM_H 
+#define ITEM_H
 
 #include <string>
 #include "json.hpp"
@@ -8,18 +9,22 @@ using json = nlohmann::json;
 class Item {
 private:
     int id;
-    std::string name;
+    string name;
     int quantity;
     double price;
     bool idDisplay;
+    int sellerId;
 
 public:
     Item();
     Item(int id, const string& name, int quantity, double price);
+
     int getId() const;
-    const string& getName() const;
+    string getName() const;
     int getQuantity() const;
     double getPrice() const;
+    int getSellerId() const;
+
     void setId(int newId);
     void setName(const string& newName);
     void setQuantity(int newQuantity);

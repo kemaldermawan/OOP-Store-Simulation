@@ -43,6 +43,13 @@ void Seller::updateItemPrice(int itemId, double newPrice) {
     std::cout << "Item with ID " << itemId << " not found.\n";
 }
 
+Item* Seller::getItemById(int id) {
+    for (auto& item : items) {
+        if (item.getId() == id) return &item;
+    }
+    return nullptr;
+}
+
 json Seller::toJson() const {
     json j;
     j["id"] = sellerId;

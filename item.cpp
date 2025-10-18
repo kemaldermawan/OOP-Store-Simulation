@@ -1,12 +1,13 @@
 #include "item.h"
 
-Item::Item() : id(0), name(""), quantity(0), price(0.0), idDisplay(false) {}
+Item::Item() : id(0), name(""), quantity(0), price(0.0), sellerId(0), idDisplay(false) {}
 
-Item::Item(int id, const string& name, int quantity, double price) : id(id), name(name), quantity(quantity), price(price), idDisplay(false) {}
+Item::Item(int id, const string& name, int quantity, double price)
+    : id(id), name(name), quantity(quantity), price(price), sellerId(0), idDisplay(false) {}
 
 int Item::getId() const { return id; }
 
-const string& Item::getName() const { return name; }
+string Item::getName() const { return name; }
 
 int Item::getQuantity() const { return quantity; }
 

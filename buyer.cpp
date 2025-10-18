@@ -2,6 +2,7 @@
     #include "bank_customer.h"
     #include "seller.h"
     #include <iostream>
+    #include <algorithm>
 
     Buyer::Buyer() : id(0), name(""), account(nullptr), sellerAccount(nullptr) {}
 
@@ -42,6 +43,77 @@
     Seller* Buyer::getSeller() const {
         return sellerAccount;
     }
+
+    void Buyer::addToCart(int itemId, const std::string& itemName, int quantity, double price, int sellerId) {
+    for (auto& c : cart) {
+        if (c.itemId == itemId && c.sellerId == sellerId) {
+            c.quantity += quantity; // tambah quantity jika item sudah ada
+            return;
+        }
+    }
+    CartItem newItem {itemId, itemName, quantity, price, sellerId};
+    cart.push_back(newItem);
+}
+
+void Buyer::listCartItems() const {
+    if (cart.empty()) {
+        std::cout << "Cart is empty.\n";
+        return;
+    }
+    std::cout << "ID\tName\tQuantity\tPrice\tSellerID\n";
+    for (const auto& c : cart) {
+        std::cout << c.itemId << "\t" << c.itemName 
+                    << "\t" << c.quantity 
+                    << "\tRp " << c.price 
+                    << "\t" << c.sellerId << "\n";
+    }
+}
+
+const vector<CartItem>& Buyer::getCart() const {
+    return cart;
+}                       
+
+void Buyer::clearCart() {
+    cart.clear();
+}
+
+double Buyer::getCartTotal() const {
+    double total = 0.0;
+    for (const auto& c : cart) {
+        total += c.price * c.quantity;
+    }
+    return total;
+}
+
+void Buyer::removeFromCart(int itemId, int sellerId) {
+    cart.erase(
+        remove_if(cart.begin(), cart.end(),
+                [itemId, sellerId](const CartItem& c) {
+                    return c.itemId == itemId && c.sellerId == sellerId;
+                }),
+        cart.end()
+    );
+}
+
+void Buyer::addTransaction(Transaction* t) {
+    transactions.push_back(t);
+}
+
+std::vector<Transaction*> Buyer::getTransactionsToday() const {
+    std::vector<Transaction*> result;
+    for (auto t : transactions) {
+        if (t->isToday()) result.push_back(t);
+    }
+    return result;
+}
+
+std::vector<Transaction*> Buyer::getTransactionsLastMonth() const {
+    std::vector<Transaction*> result;
+    for (auto t : transactions) {
+        if (t->isLastMonth()) result.push_back(t);
+    }
+    return result;
+}
 
     json Buyer::toJson() const {
         json j;
@@ -85,23 +157,3 @@
             sellerAccount = s;
         }
     }
-
-    void Buyer::addTransaction(Transaction* t) {
-    transactions.push_back(t);
-}
-
-vector<Transaction*> Buyer::getTransactionsToday() const {
-    vector<Transaction*> result;
-    for (auto t : transactions) {
-        if (t->isToday()) result.push_back(t);
-    }
-    return result;
-}
-
-vector<Transaction*> Buyer::getTransactionsLastMonth() const {
-    vector<Transaction*> result;
-    for (auto t : transactions) {
-        if (t->isLastMonth()) result.push_back(t);
-    }
-    return result;
-}

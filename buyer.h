@@ -1,47 +1,63 @@
-#ifndef BUYER_H
-#define BUYER_H
+    #ifndef BUYER_H
+    #define BUYER_H
 
-#include <string>
-#include <vector>
-#include "transaction.h"
-#include "json.hpp"
-using namespace std;
-using json = nlohmann::json;
+    #include <string>
+    #include <vector>
+    #include "transaction.h"
+    #include "item.h"
+    #include "json.hpp"
+    using namespace std;
+    using json = nlohmann::json;
 
-class BankCustomer;
-class Seller;
+    class BankCustomer;
+    class Seller;
 
-class Buyer {
-private:
-    int id;
-    string name;
-    BankCustomer* account;
-    Seller* sellerAccount;
-    vector<Transaction*> transactions;
+    struct CartItem {
+        int itemId;
+        string itemName;
+        int quantity;
+        double price;
+        int sellerId;
+    };
+    class Buyer {
+    private:
+        int id;
+        string name;
+        BankCustomer* account;
+        Seller* sellerAccount;
+        vector<Transaction*> transactions;
+        vector<CartItem> cart;
 
-public:
-    Buyer();
-    Buyer(int id, const string& name);
-    ~Buyer();
+    public:
+        Buyer();
+        Buyer(int id, const string& name);
+        ~Buyer();
 
-    int getId() const;
-    string getName() const;
+        int getId() const;
+        string getName() const;
 
-    void setAccount(BankCustomer* acc);
-    bool hasBankAccount() const;
-    BankCustomer* getAccount() const;
+        void setAccount(BankCustomer* acc);
+        bool hasBankAccount() const;
+        BankCustomer* getAccount() const;
 
-    void setSeller(Seller* s);
-    bool isSeller() const;
-    Seller* getSeller() const;
+        void setSeller(Seller* s);
+        bool isSeller() const;
+        Seller* getSeller() const;
 
-    void addTransaction(Transaction* t);
-    vector<Transaction*> getTransactionsToday() const;
-    vector<Transaction*> getTransactionsLastMonth() const;
+        void addToCart(int itemId, const string& itemName, int quantity, double price, int sellerId);
+        void listCartItems() const;
+        const vector<CartItem>& getCart() const;
+        void clearCart();
+        double getCartTotal() const;
+        void removeFromCart(int itemId, int sellerId);
 
-    // Serialization
-    json toJson() const;
-    void fromJson(const json& j);
-};
+        void addTransaction(Transaction* t);
+        vector<Transaction*> getTransactionsToday() const;
+        vector<Transaction*> getTransactionsLastMonth() const;
 
-#endif // BUYER_H
+        // Serialization
+        json toJson() const;
+        void fromJson(const json& j);
+    };
+
+    #endif // BUYER_H

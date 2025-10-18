@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include "item.h"
+#include "transaction.h"
 #include "json.hpp"
 using namespace std;
 using json = nlohmann::json;
@@ -16,6 +17,7 @@ private:
     int sellerId;
     string sellerName;
     vector<Item> items;
+    vector<Transaction*> transactions;
 
 public:
     Seller();
@@ -26,6 +28,7 @@ public:
     int getSellerId() const;
     string getSellerName() const;
     Buyer* getOwner() const;
+    Item* getItemById(int id);
     vector<Item>& getItems();
 
     // Item Management
@@ -35,9 +38,12 @@ public:
 
     void updateItemPrice(int itemId, double newPrice);
 
+    void addTransaction(Transaction* t) { transactions.push_back(t); }
+    const vector<Transaction*>& getTransactions() const { return transactions; }
+
     // Serialization
     json toJson() const;
     void fromJson(const json& j);
 };
 
-#endif
+#endif       // SELLER_H

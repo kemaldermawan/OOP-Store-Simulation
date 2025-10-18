@@ -17,8 +17,8 @@ private:
     string date; // simple string date, e.g., "2025-10-16"
     string status; // "paid", "completed", "cancelled"
 public:
-    Transaction();
-    Transaction(int id, int buyerId, int sellerId, double amount, const string& date, const string& status);
+    Transaction(int id, int buyerId, int sellerId, double amount, const std::string& date, const std::string& status);
+    Transaction(); // default constructor
     int getId() const;
     int getBuyerId() const;
     int getSellerId() const;

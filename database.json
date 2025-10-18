@@ -3,10 +3,11 @@
         {
             "bankAccount": {
                 "address": "",
-                "balance": 1250000.0,
+                "balance": 1226000.0,
                 "email": "",
                 "history": [
-                    "Account created with initial deposit Rp 1250000"
+                    "Account created with initial deposit Rp 1250000",
+                    "Deposited Rp 20000"
                 ],
                 "id": 1,
                 "name": "Kemal Dermawan",

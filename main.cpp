@@ -3,9 +3,11 @@
 #include <string>
 #include <vector>
 #include <iomanip>
+#include <ctime>
 #include "bank_customer.h"
 #include "buyer.h"
 #include "seller.h"
+#include "transaction.h"
 #include "data_manager.h"
 #include "store_manager.h"
 
@@ -21,6 +23,18 @@ Buyer* findBuyerById(int id) {
     }
     return nullptr;
 }
+
+int nextTransactionId = 1;
+
+string getTodayDate() {
+    time_t t = time(nullptr);
+    char buf[20];
+    strftime(buf, sizeof(buf), "%Y-%m-%d", localtime(&t));
+    return string(buf);
+}
+
+// Simpan tanggal hari ini sebagai variabel global
+string todayDate = getTodayDate();
 
 void menuBuyer(Buyer &buyer);
 void menuSeller(Seller &seller);
@@ -187,15 +201,163 @@ void menuBuyer(Buyer &buyer) {
                 }
                 break;
 
-            case 4:
-                cout << "Browse Store selected.\n";
-                StoreManager::listAllStores(allBuyers);
-                break;
+            case 4: {
+                currentBuyer = &buyer; 
 
-            case 5:
-                cout << "Order Functionality selected.\n";
-                cout << "(Order/payment simulation not fully implemented in this step)\n";
+                cout << "\nBrowse Store selected.\n";
+
+                // List semua store (seller)
+                vector<Seller*> availableSellers;
+                for (auto b : allBuyers) {
+                    if (b->isSeller()) availableSellers.push_back(b->getSeller());
+                }
+
+                if (availableSellers.empty()) {
+                    cout << "No stores available.\n";
+                    break;
+                }
+
+                cout << "Available Stores:\n";
+                for (size_t i = 0; i < availableSellers.size(); i++) {
+                    cout << i+1 << ". " << availableSellers[i]->getSellerName() << endl;
+                }
+
+                int storeChoice;
+                cout << "Select store by number: ";
+                cin >> storeChoice;
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+                if (storeChoice < 1 || storeChoice > (int)availableSellers.size()) {
+                    cout << "Invalid store selection.\n";
+                    break;
+                }
+
+                Seller* selectedSeller = availableSellers[storeChoice - 1];
+                const auto& items = selectedSeller->getItems();
+                if (items.empty()) {
+                    cout << "This store has no items.\n";
+                    break;
+                }
+
+                // List inventory
+                cout << "\nStore Inventory:\n";
+                cout << "ID\tName\t\tQuantity\tPrice\n";
+                for (const auto& item : items) {
+                    cout << item.getId() << "\t"
+                        << item.getName() << "\t\t"
+                        << item.getQuantity() << "\t\tRp "
+                        << fixed << setprecision(0) << item.getPrice() << endl;
+                }
+
+                // Pilih item
+                int itemId, qty;
+                cout << "Enter Item ID to add to cart: ";
+                cin >> itemId;
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+                Item* selectedItem = selectedSeller->getItemById(itemId);
+                if (!selectedItem) {
+                    cout << "Item not found.\n";
+                    break;
+                }
+
+                cout << "Enter Quantity: ";
+                cin >> qty;
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+                if (qty <= 0 || qty > selectedItem->getQuantity()) {
+                    cout << "Invalid quantity.\n";
+                    break;
+                }
+
+                // Tambahkan ke cart buyer
+                currentBuyer->addToCart(
+                    selectedItem->getId(),
+                    selectedItem->getName(),
+                    qty,
+                    selectedItem->getPrice(),
+                    selectedSeller->getSellerId()
+                );
+
+                cout << "Item added to cart successfully.\n";
                 break;
+            }
+
+            case 5: {
+                cout << "\nOrder Functionality selected.\n";
+
+                if (!currentBuyer || currentBuyer->getCartTotal() == 0) {
+                    cout << "Your cart is empty.\n";
+                    break;
+                }
+
+                bool inOrderMenu = true;
+                while (inOrderMenu) {
+                    cout << "\nYour Cart:\n";
+                    currentBuyer->listCartItems();
+                    cout << "Total: Rp " << fixed << setprecision(0) << currentBuyer->getCartTotal() << endl;
+
+                    cout << "\nOptions:\n";
+                    cout << "1. Remove Item from Cart\n";
+                    cout << "2. Checkout\n";
+                    cout << "3. Return to Buyer Menu\n";
+                    cout << "Select option: ";
+                    int orderChoice;
+                    cin >> orderChoice;
+                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+                    switch (orderChoice) {
+                        case 1: { 
+                            int removeId, sellerId;
+                            cout << "Enter Item ID to remove: ";
+                            cin >> removeId;
+                            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                            currentBuyer->removeFromCart(removeId, sellerId);
+                            break;
+                        }
+                        case 2: {
+                            double total = currentBuyer->getCartTotal();
+                            BankCustomer* account = currentBuyer->getAccount();
+                            if (!account) {
+                                cout << "No bank account linked. Cannot checkout.\n";
+                                break;
+                            }
+
+                            if (account->getBalance() < total) {
+                                cout << "Insufficient balance to complete checkout.\n";
+                                break;
+                            }
+
+                            // Potong saldo buyer
+                            account->setBalance(account->getBalance() - total);
+
+                            // Buat Transaction
+                            for (const auto& ci : currentBuyer->getCart()) {
+                                Transaction* t = new Transaction(
+                                    nextTransactionId++,         // id
+                                    currentBuyer->getId(),       // buyerId
+                                    ci.sellerId,                 // sellerId
+                                    ci.price * ci.quantity,      // amount
+                                    todayDate,                   // date
+                                    "Paid"                       // status
+                                );
+                                currentBuyer->addTransaction(t);
+                                
+                            currentBuyer->clearCart();
+                            cout << "Checkout successful. Total Rp " << total << " has been deducted.\n";
+                            inOrderMenu = false;
+                            break;
+                        }
+                    }
+                        case 3:
+                            inOrderMenu = false;
+                            break;
+                        default:
+                            cout << "Invalid option.\n";
+                    }
+                }
+                break;
+            }
 
             case 6:
                 cout << "Payment Functionality selected.\n";
