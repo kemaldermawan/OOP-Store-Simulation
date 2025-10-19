@@ -21,7 +21,7 @@ vector<Transaction*> allTransactions;
 Buyer* currentBuyer = nullptr;
 
 void menuBuyer(Buyer &buyer);
-void menuSeller(Seller &seller);
+void menuSeller(Seller &seller, const vector<Buyer*>& allBuyers);
 
 Buyer* findBuyerById(int id) {
     for (auto b : allBuyers) {
@@ -40,6 +40,16 @@ string getTodayDate() {
 }
 
 string todayDate = getTodayDate();
+
+inline long days_since(const string& date_str) {
+    tm t = {};
+    istringstream ss(date_str);
+    ss >> get_time(&t, "%Y-%m-%d");
+    if (ss.fail()) { return -1; }
+    auto transaction_time = chrono::system_clock::from_time_t(mktime(&t));
+    auto now = chrono::system_clock::now();
+    return chrono::duration_cast<chrono::hours>(now - transaction_time).count() / 24;
+}
 
 void loadApplicationData() {
     ifstream file("database.json");
@@ -158,7 +168,7 @@ void menuBanking(Buyer &buyer) {
 
 void menuBuyer(Buyer &buyer) {
     int choice = 0;
-    while (choice != 8) {
+    while (choice != 9) {
         cout << "\nBuyer Menu:\n";
         cout << "1. Check Account Status\n";
         cout << "2. Upgrade Account to Seller\n";
@@ -166,8 +176,9 @@ void menuBuyer(Buyer &buyer) {
         cout << "4. Browse Store\n";
         cout << "5. Order\n";
         cout << "6. Payment\n";
-        cout << "7. Logout\n";
-        cout << "8. Delete Account\n";
+        cout << "7. Check Spending in Last K Days\n";
+        cout << "8. Logout\n";
+        cout << "9. Delete Account\n";
         cout << "Select an option: ";
         cin >> choice;
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
@@ -270,7 +281,7 @@ void menuBuyer(Buyer &buyer) {
                     cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
                     if (storeChoice == 0) break;
-                    if (storeChoice < 1 || storeChoice > (int)availableSellers.size()) {
+                    if (storeChoice < 1 || storeChoice > static_cast<int>(availableSellers.size())) {
                         cout << "Invalid store selection.\n";
                         break;
                     }
@@ -520,13 +531,30 @@ void menuBuyer(Buyer &buyer) {
                     break;
                 }
 
+            case 7: {
+                cout << "\nCheck Spending selected\n";
+                int k;
+                cout << "Enter number of days (k): ";
+                cin >> k;
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-            case 7:
-                cout << "Logout selected.\n";
-                choice = 8;
+                double totalSpending = 0.0;
+                for (const auto* t : buyer.getTransactions()) {
+                    if ((t->getStatus() == "Paid" || t->getStatus() == "Completed") && days_since(t->getDate()) <= k) {
+                        totalSpending += t->getAmount();
+                    }
+                }
+
+                cout << "Total spending in the last " << k << " days: Rp " << fixed << setprecision(0) << totalSpending << endl;
                 break;
+            }
 
             case 8:
+                cout << "Logout selected.\n";
+                choice = 9;
+                break;
+
+            case 9:
                 cout << "Delete Account selected.\n";
                 cout << "Are you sure you want to delete your account? This action cannot be undone. (y/n): ";
                 char confirm;
@@ -558,9 +586,9 @@ void menuBuyer(Buyer &buyer) {
     }
 }
 
-void menuSeller(Seller &seller) {
+void menuSeller(Seller &seller, const vector<Buyer*>& allBuyers) {
     int choice = 0;
-    while (choice != 7) {
+    while (choice != 9) {
         cout << "\nSeller Menu:\n";
         cout << "1. Check Inventory\n";
         cout << "2. Add Item to Inventory\n";
@@ -568,9 +596,18 @@ void menuSeller(Seller &seller) {
         cout << "4. Update Item in Inventory\n";
         cout << "5. View Orders\n";
         cout << "6. Complete an Order\n";
-        cout << "7. Exit to Main Menu\n";
+        cout << "7. Discover Top K Most Popular Items (This Month)\n"; // TAMBAHAN
+        cout << "8. Discover Loyal Customer (This Month)\n";
+        cout << "9. Exit to Main Menu\n";
         cout << "Select an option: ";
         cin >> choice;
+
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "Invalid input.\n";
+            continue;
+        }
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
         switch (choice) {
@@ -744,7 +781,83 @@ void menuSeller(Seller &seller) {
                 break;
             }
 
-            case 7:
+            case 7: {
+                cout << "\nTop K Most Popular Items (This Month)\n";
+                int k;
+                cout << "Enter number of top items to show (k): ";
+                cin >> k;
+
+                string currentMonth = getTodayDate().substr(0, 7);
+                map<int, int> itemSales; 
+
+                for (const auto* t : seller.getTransactions()) {
+                    if ((t->getStatus() == "Paid" || t->getStatus() == "Completed") && t->getDate().substr(0, 7) == currentMonth) {
+                        for (const auto& item : t->getItems()) {
+                            itemSales[item.itemId] += item.quantity;
+                        }
+                    }
+                }
+
+                if (itemSales.empty()) {
+                    cout << "No items sold this month.\n";
+                    break;
+                }
+
+                vector<pair<int, int>> sortedItems(itemSales.begin(), itemSales.end());
+                sort(sortedItems.begin(), sortedItems.end(), [](const auto& a, const auto& b){
+                    return a.second > b.second;
+                });
+
+                cout << "Top " << k << " items sold in " << currentMonth << ":\n";
+                int rank = 1;
+                for (const auto& p : sortedItems) {
+                    if (rank > k) break;
+                    Item* itemInfo = seller.getItemById(p.first);
+                    string itemName = itemInfo ? itemInfo->getName() : "Unknown Item";
+                    cout << rank++ << ". " << itemName << " (ID: " << p.first << ") - Sold: " << p.second << " units.\n";
+                }
+                break;
+            }
+
+            case 8: {
+                cout << "\nLoyal Customer (This Month)\n";
+                
+                string currentMonth = getTodayDate().substr(0, 7);
+                map<int, double> customerSpending;
+
+                for (const auto* t : seller.getTransactions()) {
+                    if ((t->getStatus() == "Paid" || t->getStatus() == "Completed") && t->getDate().substr(0, 7) == currentMonth) {
+                        customerSpending[t->getBuyerId()] += t->getAmount();
+                    }
+                }
+
+                if (customerSpending.empty()) {
+                    cout << "No customers made a purchase this month.\n";
+                    break;
+                }
+
+                pair<int, double> topCustomer = {0, 0.0};
+                for(const auto& pair : customerSpending) {
+                    if (pair.second > topCustomer.second) {
+                        topCustomer = pair;
+                    }
+                }
+
+                string customerName = "Unknown (ID: " + to_string(topCustomer.first) + ")";
+                for(const auto* b : allBuyers) {
+                    if(b->getId() == topCustomer.first) {
+                        customerName = b->getName();
+                        break;
+                    }
+                }
+
+                cout << "The most loyal customer in " << currentMonth << " is:\n";
+                cout << "Name: " << customerName << "\n";
+                cout << "Total Spending: Rp " << fixed << setprecision(0) << topCustomer.second << endl;
+                break;
+            }
+
+            case 9:
                 cout << "Exiting to Main Menu...\n";
                 return;
 
@@ -794,7 +907,6 @@ int main() {
     if (!allBuyers.empty()) {
         nextBuyerId = allBuyers.back()->getId() + 1;
     } else {
-        cout << "(No existing data, starting fresh)\n";
     }
 
     while (prompt != EXIT) {
@@ -842,7 +954,7 @@ int main() {
                         cin >> roleChoice;
                         cin.ignore();
                         if (roleChoice == 2) {
-                            menuSeller(*found->getSeller());
+                            menuSeller(*found->getSeller(), allBuyers);
                         } else {
                             menuBuyer(*found);
                         }
@@ -884,6 +996,11 @@ int main() {
                     cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
                     BankCustomer* bankAccount = new BankCustomer(newBuyer->getId(), name, initialDeposit);
+
+                    bankAccount->setAddress(address);
+                    bankAccount->setPhone(phone);
+                    bankAccount->setEmail(email);
+
                     currentBuyer->setAccount(bankAccount);
                     hasBank = true;
                     cout << "Banking Account created successfully with initial deposit of "

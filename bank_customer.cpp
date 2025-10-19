@@ -10,7 +10,7 @@ using namespace std;
 BankCustomer::BankCustomer() : id(0), name(""), address(""), phone(""), email(""), balance(0.0) {}
 
 BankCustomer::BankCustomer(int id, const string& name, double initialBalance) : id(id), name(name), address(""), phone(""), email(""), balance(initialBalance) {
-    history.push_back("Account created with initial deposit Rp " + to_string((long long)initialBalance));
+    history.push_back("Account created with initial deposit Rp " + to_string(static_cast<long long>(initialBalance)));
 }
 
 int BankCustomer::getId() const { return id; }
@@ -33,7 +33,7 @@ void BankCustomer::deposit(double amount) {
         return;
     }
     balance += amount;
-    history.push_back("Deposited Rp " + to_string((long long)amount));
+    history.push_back("Deposited Rp " + to_string(static_cast<long long>(amount)));
     cout << "Deposit successful. New balance: Rp " << fixed << setprecision(0) << balance << endl;
 }
 
@@ -47,7 +47,7 @@ bool BankCustomer::withdraw(double amount) {
         return false;
     }
     balance -= amount;
-    history.push_back("Withdrew Rp " + to_string((long long)amount));
+    history.push_back("Withdrew Rp " + to_string(static_cast<long long>(amount)));
     cout << "Withdrawal successful. New balance: Rp " << fixed << setprecision(0) << balance << endl;
     return true;
 }

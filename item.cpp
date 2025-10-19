@@ -3,10 +3,10 @@
 using namespace std;
 
 Item::Item()
-    : id(0), name(""), quantity(0), price(0.0), sellerId(0), idDisplay(false) {}
+    : id(0), name(""), quantity(0), price(0.0), idDisplay(false), sellerId(0) {}
 
 Item::Item(int id, const string& name, int quantity, double price)
-    : id(id), name(name), quantity(quantity), price(price), sellerId(0), idDisplay(false) {}
+    : id(id), name(name), quantity(quantity), price(price),  idDisplay(false), sellerId(0) {}
 
 int Item::getId() const { 
     return id; 

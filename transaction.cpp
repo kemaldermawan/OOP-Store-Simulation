@@ -11,7 +11,8 @@ Transaction::Transaction()
     transactionId(0),
     amount(0.0),
     date(""),
-    status("unpaid") {}
+    status("unpaid"),
+    items{} {}
 
 Transaction::Transaction(int id, int buyerId, int sellerId, double amount, const string& date, const string& status, const vector<OrderItem>& items)
     : id(id),
@@ -19,9 +20,9 @@ Transaction::Transaction(int id, int buyerId, int sellerId, double amount, const
     sellerId(sellerId),
     transactionId(id),
     amount(amount),
-    items(items),
     date(date),
-    status(status) {}
+    status(status),
+    items(items) {}
 
 int Transaction::getId() const { return id; }
 int Transaction::getTransactionId() const { return transactionId; }

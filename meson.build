@@ -25,25 +25,18 @@ add_global_arguments(cpp_args, language : 'cpp')
 
 app_sources = [
     'main.cpp',
+    'bank_customer.cpp',
+    'bank_manager.cpp',
     'buyer.cpp',
-    'buyer.h',
     'data_manager.cpp',
-    'data_manager.h',
     'item.cpp',
-    'order.h',
     'seller.cpp',
     'store_manager.cpp',
-    'store_manager.h',
-    'transaction.cpp',
-    'transaction.h',
-    'bank_customer.h', 
-    'bank_customer.cpp',
-    'bank.h',
-    'item.h', 'seller.h'
+    'transaction.cpp' 
 # Add other source files here, e.g., 'src/helper.cpp'
 ]
 
-executable('my_app',
+executable('main',
     app_sources,
     # Example dependencies:
     # dependencies: [fmt_dep],
